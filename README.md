@@ -6,11 +6,8 @@ Code for the paper **"SCORE: Spectral Correlation Estimation for Multivariate Ga
 
 ![Schematic overview of SCORE](assets/score_overview.png)
 
-Stage 1 fits the mean $\mu$ and the marginal variances $\tau$ (orange) and standardizes the
-target, leaving only its correlation structure. Stage 2 models this correlation by a normalized
-spectrum $s_k^\star$ in Fourier coordinates, whose back-transform $F^\ast$ is the correlation core
-$R^\star$ (purple). Rescaling by the frozen marginals yields the predictive covariance
-$\Sigma_P$ (green).
+Stage 1 fits the mean $\mu$ and the marginal variances $\tau$ (orange) and standardizes the target, leaving only its correlation structure. Stage 2 models this correlation by a normalized
+spectrum $s_k^\star$ in Fourier coordinates, whose back-transform ${F}^\ast$ is the correlation core $R^\star$ (purple). Rescaling by the frozen marginals yields the predictive covariance $\Sigma_P$ (green).
 
 ## Abstract
 
