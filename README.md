@@ -37,12 +37,12 @@ matrix that is parameterized in the domain of a unitary transform $B$ (by defaul
 $F$):
 
 $$
-\Sigma_P = D_\tau \operatorname{corr}\!\left(B^\ast \hat\Sigma B\right) D_\tau,
-\qquad D_\tau = \operatorname{diag}(\sqrt{\tau}).
+\Sigma_P = D_\tau \mathrm{corr}(B^\ast \hat\Sigma B) D_\tau,
+\qquad D_\tau = \mathrm{diag}(\sqrt{\tau}).
 $$
 
-For the DFT and a diagonal core $\hat\Sigma = \operatorname{diag}(s)$ with $s = d\,\mathrm{softmax}(\ell)$,
-the core $F^\ast \operatorname{diag}(s) F$ is already a circulant *correlation* matrix: dense in
+For the DFT and a diagonal core $\hat\Sigma = \mathrm{diag}(s)$ with $s = d\,\mathrm{softmax}(\ell)$,
+the core $F^\ast \mathrm{diag}(s) F$ is already a circulant *correlation* matrix: dense in
 physical space, stored with $d$ numbers and applied with the FFT in $\mathcal{O}(d \log d)$.
 
 * **Kernel score instead of the NLL.** All multivariate fits use the closed-form Gaussian kernel
