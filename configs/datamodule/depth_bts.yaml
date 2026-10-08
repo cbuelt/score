@@ -1,0 +1,18 @@
+_target_: src.datamodules.DepthDataModule
+# BTS/Eigen-split NYU Depth V2 at native 480x640 (the protocol of Liu et al.,
+# CVPR 2023): 24,231 train pairs from the sync set (depth uint16 millimeters,
+# projection holes nearest-filled at build time, hole mask stored alongside),
+# 654 dense Eigen test images from the labeled set. Targets are meters/10 in
+# [0,1]; d = 307,200 per sample. Built by build_nyu_bts.py.
+data_path: ${paths.nyu_bts_dir}/
+dataset: nyu_bts
+# Full-resolution frames (d = 307,200), hence the small batch sizes.
+batch_size: 8
+eval_batch_size: 1
+num_workers: 4
+val_split: 0.1
+split_seed: ${data_seed}
+pin_memory: True
+# ~37 GB on disk; read lazily (per-image chunks) instead of preloading.
+preload: False
+persistent_workers: True

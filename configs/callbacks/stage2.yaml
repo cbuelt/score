@@ -1,0 +1,23 @@
+defaults:
+  - model_checkpoint
+#  - early_stopping
+  - _self_
+
+# Stage-2 callbacks of the SCORE two-stage fit (correlation core). The stage-2
+# best checkpoint is the final model (frozen stage-1 mu/tau plus the fitted core)
+# and is what evaluation loads.
+model_checkpoint:
+  dirpath: ${paths.output_dir}/checkpoints/stage2
+  filename: "epoch_{epoch:03d}"
+  monitor: training/val_loss
+  mode: min
+  auto_insert_metric_name: False
+
+# early_stopping:
+#   monitor: training/val_loss
+#   patience: 10
+#   mode: min
+
+monitor:
+  _target_: lightning.pytorch.callbacks.LearningRateMonitor
+  logging_interval: step

@@ -1,0 +1,25 @@
+# @package _global_
+defaults:
+  - /experiments/train: settings
+  - override /datamodule: ettm1
+  - override /backbone: patchtst
+
+# Single-stage training.
+staged: False
+
+# Data module: univariate forecasting of the OT target.
+datamodule:
+  features: S
+
+# Backbone: PatchTST at the size the ETTm benchmarks are tuned at.
+backbone:
+  n_layers: 2
+  d_model: 128
+  n_heads: 16
+  d_ff: 256
+  dropout: 0.2
+
+# Optimizer
+optimizer:
+  optimizer:
+    lr: 1.0e-4

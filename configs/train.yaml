@@ -1,0 +1,29 @@
+defaults:
+  - _self_
+  # Placeholder groups. Every run selects an experiment, and the experiment
+  # overrides these -- they exist so `override /datamodule` etc. have a target.
+  - datamodule: etth1
+  - backbone: patchtst
+  - method: deterministic
+  # Optimizer + scheduler bundle: `optimizer` nests its matching scheduler under
+  # `optimizer.scheduler`, so this one entry brings both (read in train.py as
+  # cfg.optimizer.optimizer / cfg.optimizer.scheduler).
+  - optimizer@optimizer: optimizer
+  # The SCORE (two-stage) experiments add their own per-stage bundles
+  # (optimizer@optimizer_stage1 / optimizer_stage2); when a stage's bundle is
+  # unset, that stage falls back to the shared one above.
+  - callbacks: default
+  - callbacks@callbacks_stage1: stage1
+  - callbacks@callbacks_stage2: stage2
+  - logger: wandb
+  - trainer: default
+  - paths: default
+  # Machine-specific overrides (git-ignored), see configs/local/default.yaml.example.
+  - optional local: default
+  - hydra: default
+  # The experiment carries the dataset x model specifics and the shared run
+  # settings (via experiments/<tree>/settings.yaml). Mandatory: a run must name
+  # one, e.g. `experiments=train/time_series/univariate/etth1`. Listed last so it
+  # overrides every group above -- in particular `staged`, which belongs to the
+  # model variant, not to the run.
+  - experiments: ???

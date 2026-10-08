@@ -1,0 +1,13 @@
+# @package _global_
+# Machine-specific settings. Copy this file to configs/local/default.yaml
+# (git-ignored); it is picked up automatically by every entry point and
+# overrides the defaults in configs/paths/default.yaml.
+paths:
+  data_dir: /path/to/data
+  # results_dir: /path/to/results
+  # time_series_dir: /path/to/all_six_datasets
+  # era5_dir: /path/to/era5
+  # nyu_bts_dir: /path/to/nyu_bts
+  # euppbench_dir: /path/to/euppbench_72h
+  # depthanything_checkpoint: /path/to/depth_anything_v2_vits.pth
+  # dinov2_dir: /path/to/dinov2

@@ -1,0 +1,56 @@
+defaults:
+  - default
+
+_target_: src.methods.sample_based.SampleBased
+# SB, the sample-based generative baseline: the backbone maps (input, latent) -> one
+# sample, M latents give M ensemble members, and the parameters are fitted by
+# minimizing a *fair* (unbiased in M) proper scoring rule of that ensemble
+# against the observation. This is the nonparametric reference the Gaussian
+# families are measured against -- it makes no distributional assumption at all,
+# at the cost of having no density (`nll` is reported as inf and renders as an
+# empty cell).
+#
+# `n_eval_samples: 100` comes from method/default.yaml. These are ensemble sizes,
+# not a Monte-Carlo budget on top of a closed form: each member costs a replay of
+# the backbone head, so M is the compute knob here.
+
+# The Gaussian kernel score, at the shared gamma ladder (gamma_train in
+# experiments/train/settings.yaml). `SampleBased.kernel_score` overrides the
+# closed form with the fair ensemble estimator -- the same functional, and the
+# same estimator, as the reported `kernel_score` metric, so SB trains on the
+# number the tables report and is directly comparable with the Gaussian
+# families rather than being fitted on a second objective.
+#
+# `energy_score` (the fair ensemble ES, what the generative-forecasting
+# literature this baseline follows minimizes) stays available as
+# `method.loss=energy_score`. Runs fitted under the two are NOT comparable and
+# must not share a results table; the run name carries the loss, so they get
+# distinct slugs.
+loss: kernel_score
+
+# Training ensemble size M, set here rather than inherited from
+# method/default.yaml (which carries 10 for the closed-form families that ignore
+# it). M is the memory knob for SB: M = 5 instead of 10 cuts ~25% of the
+# activations (on ERA5, 3.35 GiB/sample against 4.44), and SB is the method
+# whose memory sets the shared batch size on every gridded task.
+#
+# The *fair* estimator is what makes this safe -- the kernel and energy scores
+# alike: its 1/(M(M-1)) spread term is unbiased in M, so M = 5 is not rewarded
+# for under-dispersion the way the biased estimator would be. It is still a
+# smaller sample of the predictive, so the gradient is noisier than at M = 10 --
+# runs fitted at the two values are NOT comparable and should not share a
+# results table.
+n_train_samples: 5
+
+# Latent-noise injection, built by the backbone between its trunk and its head
+# (see src/models/backbones/noise.py). Both latents are needed: the global one
+# is shared across every position of a member and is what gives the samples
+# spatial dependence, the local one is drawn per position and is what keeps the
+# predictive from being degenerate at rank `global_noise_dim`.
+global_noise_dim: 32
+local_noise_dim: 8
+# Hidden width of the injector's mixer; null uses the trunk's own feature width.
+noise_hidden_dim: null
+
+# `out_channels`, `gamma`, `gamma_eval` and `event_dim` are injected at runtime;
+# this method absorbs `event_dim` through **kwargs since it sizes nothing.

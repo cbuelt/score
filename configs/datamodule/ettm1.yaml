@@ -1,0 +1,20 @@
+# ETTm1 (15-minute ETT). 6 features + OT target; fixed 12/4/4-month split (x4).
+# Univariate forecasting: set features=S. Multivariate: features=M (default).
+_target_: src.datamodules.TimeSeriesDataModule
+data_path: ${paths.time_series_dir}/ETT-small/ETTm1.csv
+data_split: ett_minute
+features: M
+target: OT
+seq_len: 336
+pred_len: 96
+label_len: 0
+scale: True
+timeenc: 0
+freq: t
+return_marks: False
+batch_size: 128
+eval_batch_size: 128
+num_workers: 0
+drop_last: True
+preload: True
+persistent_workers: True

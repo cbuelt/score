@@ -1,0 +1,21 @@
+defaults:
+  - score
+
+# Transform ablation: SCORE with a diagonal core in an unbalanced-Haar wavelet
+# domain: orthonormal for arbitrary axis lengths (reduces to classical Haar at
+# powers of two), maximally localized -- the canonical basis for edge-dominated,
+# locally stationary fields. Non-flat, so the renormalization by the implied marginal variances Delta (paper Eq. (10))
+# is selected automatically.
+#
+# `shape: null` means the axis lengths are read off the first batch, so this
+# config is dataset-agnostic: one unbalanced-Haar basis per spatial axis,
+# whatever the target field turns out to be -- the two axes of a depth image, or
+# a 1-D forecast horizon of length `pred_len` for the time-series tasks. Unlike
+# the classical `haar` kind this needs no power-of-two axis, which is what makes
+# it usable at pred_len = 96 or the illness horizon of 24. Set it explicitly
+# (e.g. `shape: [128, 160]`, or `shape: 96` for a single axis) only to assert
+# the grid.
+transform:
+  _target_: src.methods.transforms.make_separable_transform
+  kind: uhaar
+  shape: null

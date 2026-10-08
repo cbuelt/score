@@ -1,0 +1,18 @@
+_target_: src.datamodules.WeatherBenchModule
+data_path: ${paths.era5_dir}/
+batch_size: 16
+eval_batch_size: 8
+num_workers: 4
+pin_memory: True
+preload: True
+normalize: True
+downscaling_factor: 1
+last_t_steps: 2
+lead_time: 3
+persistent_workers: True
+# Normalization statistics. null -> <data_path>/era5_statistics.npy, the
+# per-variable mean/std over the whole 1990-2022 store (val/test years
+# included). The paper's experiments pass a file computed on the training
+# years 1990-2014 only, e.g.
+#   datamodule.statistics_path=/path/to/era5_statistics_train1990-2014.npy
+statistics_path: null

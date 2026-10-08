@@ -1,0 +1,28 @@
+# @package _global_
+defaults:
+  - /experiments/train: settings
+  - override /datamodule: illness
+  - override /backbone: patchtst
+
+# Single-stage training.
+staged: False
+
+# Data module: multivariate forecasting.
+datamodule:
+  features: M
+
+# Backbone: PatchTST at the size the illness benchmark is tuned at. The short
+# look-back uses a longer patch with a small stride (upstream illness setting).
+backbone:
+  n_layers: 2
+  d_model: 16
+  n_heads: 4
+  d_ff: 128
+  dropout: 0.3
+  patch_len: 24
+  stride: 2
+
+# Optimizer
+optimizer:
+  optimizer:
+    lr: 2.5e-3

@@ -1,0 +1,36 @@
+# Channel-independent patch transformer (PatchTST) with a group-structured head.
+# `in_channels` / `out_channels` / `group_widths` are bound at runtime by train.py
+# from the datamodule and the predictive method; the context/horizon windows are
+# interpolated from the datamodule so they cannot drift out of sync with the data.
+_target_: src.models.backbones.PatchTST
+seq_len: ${datamodule.seq_len}
+pred_len: ${datamodule.pred_len}
+
+# Patching
+patch_len: 16
+stride: 8
+padding_patch: end
+
+# Trunk. Depth is 2 here, not the upstream 3: each sub-head adds one more encoder
+# block, so every path through the network is still 3 encoder layers deep -- the
+# depth PatchTST was tuned at -- while the heads get their own capacity.
+n_layers: 2
+d_model: 128
+n_heads: 16
+d_ff: 256
+dropout: 0.20
+
+# Reversible instance norm. The head output is denormalized group-wise (mu affinely,
+# sigma as a variance); see PatchTST._denorm_groups.
+revin: true
+affine: true
+subtract_last: false
+
+# Size-only head config, mirroring configs/backbone/ucast.yaml. `shared` carries
+# mu+sigma, `other` the SCORE correlation core (or the LorD low-rank factor). The flatten projection
+# dominates the head's parameter count (~516k per group), so depth is the cheap
+# knob (~132k per block) and head_dropout does the regularizing.
+head:
+  shared_num_blocks: 1
+  other_num_blocks: 1
+  head_dropout: 0.0

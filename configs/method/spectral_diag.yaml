@@ -1,0 +1,8 @@
+defaults:
+  - default
+
+# Ablation: unnormalized Fourier-diagonal Gaussian, Sigma = F* diag(s) F, with
+# mean, variances and spectrum fitted jointly in a single stage (no two-stage
+# fit, no scale gauge on s). Contrast with SCORE (method/score.yaml).
+_target_: src.methods.spectral.SpectralDiag
+loss: kernel_score

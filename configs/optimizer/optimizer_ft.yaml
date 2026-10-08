@@ -1,0 +1,25 @@
+# Optimizer + LR-scheduler bundle for stage 2 (core fit) of the SCORE two-stage fit.
+# Same nested shape as optimizer.yaml but with a smaller peak lr and the shorter
+# fine-tuning warmup, since stage 2 resumes from the converged stage-1 marginals.
+# Select per stage via, e.g., `+optimizer@optimizer_stage2=optimizer_ft`.
+
+# AdamW preset for stage 2: smaller peak lr than the shared optimizer.yaml.
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 1.0e-3
+  weight_decay: 0.05
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+# Warmup -> cosine schedule preset for stage 2.
+# `warmup_epochs` is the number of epochs of linear warmup, converted to steps
+# from the trainer's steps-per-epoch. Warmup epochs are subtractive (they are
+# spent inside `stage2_max_epochs`, which the cosine span then covers the rest
+# of). Stage 2 starts from a good init, so a short warmup suffices.
+scheduler:
+  _target_: src.utils.lr_scheduler.LinearWarmupCosineAnnealingLR
+  _partial_: true
+  warmup_epochs: 3
+  eta_min: 1.0e-9
+  warmup_start_lr: 0.0

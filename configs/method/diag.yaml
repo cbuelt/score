@@ -1,0 +1,6 @@
+defaults:
+  - default
+
+# Diag: diagonal Gaussian in physical space (independent marginals).
+_target_: src.methods.diagonal.Diag
+loss: kernel_score

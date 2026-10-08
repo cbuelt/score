@@ -1,0 +1,11 @@
+wandb:
+  _target_: lightning.pytorch.loggers.wandb.WandbLogger
+  save_dir: "${paths.output_dir}"
+  offline: False
+  id: null # pass correct id to resume experiment!
+  name: null # set at runtime to <dataset>_<method>[_<transform>][_lora<r>][_<act>]_<loss>
+  # Filterable facet tags (dataset:/method:/transform:/rank:/act:/stage2:/seed:)
+  # are appended at runtime; tags listed here are kept in front of them.
+  tags: []
+  project: "spectral-experiments"
+  log_model: False

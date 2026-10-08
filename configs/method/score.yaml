@@ -1,0 +1,46 @@
+defaults:
+  - default
+
+# SCORE: Gaussian with a correlation core in a transformed (by default DFT)
+# domain, fitted in two stages (see experiments/train/*_score.yaml).
+_target_: src.methods.score.SCORE
+# `loss` is the core loss for single-stage contexts; the two-stage fit
+# (staged: true) overrides it per stage with stage1_loss / stage2_loss.
+loss: kernel_score
+# Stage 1 fits the mean mu and marginal variances tau. crps is the default;
+# marginal_kernel_score is the per-marginal Gaussian kernel score alternative.
+stage1_loss: crps
+# Stage 2 fits the correlation core to the standardized target
+# Z = D^-1 (Y - mu). kernel_score is preferred; nll is also available.
+stage2_loss: kernel_score
+# Whether stage 2 freezes the mu/tau pathway (trunk + mu/sigma heads), training
+# only the correlation core. true (default) keeps the converged stage-1 marginals fixed;
+# false treats stage 2 as full finetuning, letting it update all weights.
+freeze_backbone: true
+# Constrain the core to a unit-mean spectrum, s = d * softmax(h_s) (the scale
+# gauge mean(s) = 1). true (default) makes the circulant core a correlation
+# matrix, so the predictive marginal variance is exactly the stage-1 tau and
+# stage 2 only shapes the spectrum. false uses an unconstrained softplus core,
+# whose predictive marginal variance is tau * mean(s).
+normalize_core: true
+# Temperature for the normalized-core softmax over the frequency axes. T = 1
+# (default) is the plain softmax; T > 1 flattens the spectrum toward uniform,
+# T < 1 sharpens it. Only used when normalize_core is true.
+temperature: 1.0
+# Activation of the normalized core: "softmax" (default) maps the head outputs
+# as logits (coupled; per-bin gradients scale with the bin's probability, so
+# very small bins saturate); "softplus" is the elementwise map renormalized to
+# mean(s) = 1 (same gauge, local gradients). Only used when normalize_core is
+# true.
+core_activation: softmax
+# Optional non-Fourier transform for the core (see src/methods/transforms.py).
+# null (default) keeps the native FFT path; a SeparableOrthogonalTransform
+# switches all scores/samplers to the general real-orthogonal path with the
+# automatic renormalization by the implied marginal variances Delta (paper
+# Eq. (10)); see score_dct.yaml for an example.
+transform: null
+# Low-rank correction of the core (native Fourier path and any transform):
+# Sigma_hat = diag(s) + U U* in the B-domain (paper Eqs. (11)-(12)) with r real
+# factor fields in physical space. 0 (default) disables it; r > 0 activates the
+# renormalization by Delta so the predictive marginal variances stay exactly tau.
+rank: 0

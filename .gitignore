@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model weights and experiment artifacts
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.onnx
+/outputs/
+wandb/
+mlruns/
+lightning_logs/
+/logs/
+*.out
+
+# Data and results (see configs/paths/default.yaml)
+/data/
+/datasets/
+/results/
+*.csv
+*.parquet
+*.h5
+*.hdf5
+*.npz
+*.npy
+*.pkl
+*.zarr
+
+# Machine-specific settings (templates: *.example)
+configs/local/*.yaml
+runs/env.sh
+runs/local/
+
+# Generated figures and tables (written by the notebooks)
+notebooks/figures/
+notebooks/tables/
+notebooks/exploratory/
+/*.pdf
+
+# IDE / tools
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db

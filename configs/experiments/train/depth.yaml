@@ -1,0 +1,29 @@
+# @package _global_
+# Monocular depth (NYU Depth v2), single-stage baselines on the Depth Anything V2
+# backbone. The default method is Det (`deterministic`); the distributional
+# baselines are selected on top, e.g. `method=diag method.loss=crps`.
+defaults:
+  - /experiments/train: settings
+  - override /datamodule: depth
+  - override /backbone: depthanything
+  - override /method: deterministic
+
+# Single-stage training.
+staged: False
+
+trainer:
+  max_epochs: 75
+
+# Unweighted, unlike the ERA5 experiments. Inverse *grid* distance is a sensible
+# locality weight only where the grid is the geometry: on ERA5's lat/lon grid,
+# pixel separation is physical separation. A depth map is a camera projection, so
+# it is not -- an occlusion boundary puts adjacent pixels at unrelated depths --
+# and weighting by inverse pixel distance would assert a metric the data does not
+# have. Keep `depth_score` on the same setting or the two experiments are not
+# comparable.
+variogram:
+  weight: none
+
+# Metrics without the variogram score: at the BTS resolution (d=307200) its
+# O(V^2) pair sweep costs hours per run; compute it post hoc where needed.
+metrics: [crps, kernel_score, energy_score, mse, mae, nll]

@@ -1,0 +1,33 @@
+# Optimizer + LR-scheduler bundle reproducing PatchTST's default recipe, i.e.
+# the one its ETTh and weather benchmarks are tuned under. Differs from
+# optimizer.yaml in exactly the two ways upstream does:
+#
+#   * plain Adam, no weight decay. Upstream uses `optim.Adam(lr=...)`; with
+#     weight_decay=0 AdamW is Adam, so the class is kept for one code path.
+#   * `lradj='type3'`: the LR is held flat for the first epochs, then multiplied
+#     by 0.9 once per epoch. It never anneals to a terminal value, so early
+#     stopping can cut the run at any point without discarding an annealed
+#     endpoint -- which is why upstream pairs this schedule with a patience.
+#
+# Use with callbacks=early_stop. See configs/optimizer/patchtst_onecycle.yaml
+# for the `lradj='TST'` recipe the ETTm/traffic/electricity scripts use instead.
+
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 1.0e-4
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+# `type3`: lr(epoch) = lr * 0.9 ** max(0, epoch - 3), no warmup. The `_epochs`
+# keys are converted to optimizer steps by _build_optimizer_and_scheduler once
+# steps-per-epoch is known.
+scheduler:
+  _target_: src.utils.lr_scheduler.StepwiseExponentialLR
+  _partial_: true
+  warmup_epochs: 0
+  gamma: 0.9
+  decay_start_epochs: 3
+  decay_period_epochs: 1
+  eta_min: 0.0

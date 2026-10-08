@@ -1,0 +1,19 @@
+# Exchange rate (daily). 8 variates; 70/10/20 ratio ("custom") split.
+_target_: src.datamodules.TimeSeriesDataModule
+data_path: ${paths.time_series_dir}/exchange_rate/exchange_rate.csv
+data_split: custom
+features: M
+target: OT
+seq_len: 336
+pred_len: 96
+label_len: 0
+scale: True
+timeenc: 0
+freq: d
+return_marks: False
+batch_size: 128
+eval_batch_size: 128
+num_workers: 4
+drop_last: True
+preload: True
+persistent_workers: True

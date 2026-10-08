@@ -1,0 +1,32 @@
+defaults:
+  - model_checkpoint
+  - early_stopping
+  - _self_
+
+# Same checkpointing as callbacks/default.yaml, plus the early stopping the
+# PatchTST scripts run with. Only worth selecting alongside a schedule whose
+# tail is disposable (see configs/optimizer/patchtst_type3.yaml): stopping a
+# warmup->cosine run early throws away the annealed endpoint that is the whole
+# point of the cosine.
+#
+# `patience` is the per-dataset knob -- upstream uses 20 for ETTm/weather and 10
+# for traffic/electricity -- so experiments override it:
+#     callbacks:
+#       early_stopping:
+#         patience: 10
+model_checkpoint:
+  dirpath: ${paths.output_dir}/checkpoints
+  filename: "epoch_{epoch:03d}"
+  monitor: training/val_loss
+  mode: min
+  save_last: False
+  auto_insert_metric_name: False
+
+early_stopping:
+  monitor: training/val_loss
+  mode: min
+  patience: 20
+
+monitor:
+  _target_: lightning.pytorch.callbacks.LearningRateMonitor
+  logging_interval: step

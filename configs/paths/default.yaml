@@ -1,0 +1,44 @@
+# Root of the repository; all relative paths below resolve against the working
+# directory, so launch from the repository root.
+root_dir: .
+
+# Logs, checkpoints and Hydra run directories.
+log_dir: ${paths.root_dir}/logs/
+
+# Collected checkpoints and derived diagnostics,
+# <experiment>/<dataset>/[<mode>/][T<horizon>/]<slug>/seed<N>/, read by the
+# notebooks and src/evaluation/calibration.py.
+results_dir: ${paths.root_dir}/results
+
+# Output directory of the current run, created by Hydra
+# (pattern in configs/hydra/default.yaml).
+output_dir: ${hydra:runtime.output_dir}
+
+# Working directory Hydra was launched from.
+work_dir: ${hydra:runtime.cwd}
+
+# ---------------------------------------------------------------------------
+# Data locations. The defaults follow the layout described in the README; to
+# point at data stored elsewhere, copy configs/local/default.yaml.example to
+# configs/local/default.yaml (git-ignored) and override the entries there.
+# ---------------------------------------------------------------------------
+data_dir: ${paths.root_dir}/data
+
+# Long-term forecasting benchmarks (ETT-small/, electricity/, traffic/,
+# weather/, illness/, exchange_rate/), as distributed with Autoformer.
+time_series_dir: ${paths.data_dir}/time_series
+
+# ERA5 store from WeatherBench2 (see src/data/download_era5.py).
+era5_dir: ${paths.data_dir}/era5
+
+# NYU Depth v2, Eigen split (see src/data/build_nyu_bts.py), and the
+# low-resolution variant used by datamodule/depth.yaml.
+nyu_bts_dir: ${paths.data_dir}/nyu_bts
+nyu_dir: ${paths.data_dir}/nyu
+
+# EUPPBench station data, 72 h lead time.
+euppbench_dir: ${paths.data_dir}/euppbench_72h
+
+# Pretrained Depth Anything V2 weights and the DINOv2 source tree.
+depthanything_checkpoint: ${paths.data_dir}/pretrained/depth_anything_v2_vits.pth
+dinov2_dir: ${paths.data_dir}/pretrained/dinov2

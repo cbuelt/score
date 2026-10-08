@@ -1,0 +1,36 @@
+# @package _global_
+# Monocular depth (NYU Depth v2), SCORE with the two-stage fit.
+defaults:
+  - /experiments/train: settings
+  # Per-stage optimizer+scheduler bundles: stage 2 resumes from the converged
+  # stage-1 marginals, so it gets the fine-tuning preset. Must precede the
+  # `override` entries -- Hydra requires those at the end of a defaults list.
+  - /optimizer@optimizer_stage1: optimizer
+  - /optimizer@optimizer_stage2: optimizer_ft
+  - override /datamodule: depth
+  # Same backbone as the single-stage `depth` experiment: every backbone here
+  # builds its heads from `group_widths` at runtime and exposes
+  # `freeze_for_stage2()`, so one class serves both the single-stage and the
+  # two-stage model -- stage 2 freezes the mu/tau pathway and trains `other_proj`.
+  - override /backbone: depthanything
+  - override /method: score
+
+# SCORE two-stage fit: train() dispatches to train_staged, which fits the mean
+# and marginal variances first (stage 1), then freezes them and fits the
+# correlation core (stage 2).
+staged: True
+
+trainer:
+  max_epochs: 75
+stage1_max_epochs: 50
+stage2_max_epochs: 25
+
+# Unweighted, matching the single-stage `depth` experiment -- see the note there
+# for why a camera projection does not admit an inverse-grid-distance weight, and
+# why the two experiments must agree to stay comparable.
+variogram:
+  weight: none
+
+# Metrics without the variogram score: at the BTS resolution (d=307200) its
+# O(V^2) pair sweep costs hours per run; compute it post hoc where needed.
+metrics: [crps, kernel_score, energy_score, mse, mae, nll]

@@ -1,0 +1,23 @@
+_target_: src.models.backbones.Multigraph
+# Station geometry (the geodesic distance matrix) comes from the same metadata
+# file the datamodule reads, so the graph and the variogram weights cannot drift.
+meta_path: ${datamodule.data_path}/meta.npz
+
+# Hyperparameters from Table A.4 of Feik et al. (arXiv:2407.11050), 24 h column.
+# `max_dist` was not part of their grid search (100 km was chosen in their
+# preliminary testing); the remaining values were.
+max_dist: 100.0
+embedding_dim: 20
+hidden_channels_gnn: 265
+num_layers_gnn: 2
+heads: 8
+hidden_channels_deepset: 265
+deepset_layers_in: 2
+deepset_layers_out: 2
+
+# Cap the ensemble members processed in one pass, averaging the head outputs
+# over the groups. Required, not optional: the edge count grows as M**2, and a
+# single 51-member batch needs >20 GiB for one attention intermediate. At 11
+# this splits the 51 test members into [11, 10, 10, 10, 10], matching the
+# grouping of Feik et al., and leaves the 11-member training splits untouched.
+member_chunk: 11

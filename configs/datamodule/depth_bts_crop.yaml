@@ -1,0 +1,18 @@
+_target_: src.datamodules.DepthDataModule
+# BTS/Eigen-split NYU Depth V2 restricted to the Eigen crop (rows 45:471,
+# columns 41:601 of the 480x640 frame -> 426x560, d = 238,560), the region the
+# NYU evaluations since Eigen et al. (2014) score on and the one Liu et al.
+# (CVPR 2023) train on (their loader zeroes the ground truth outside it). Same
+# 24,231 / 654 split, uint16 millimeters capped at 10 m, remaining projection
+# holes (~14% inside the crop) nearest-filled at build time with the hole mask
+# stored as `valid`. Built by `build_nyu_bts.py --crop`.
+data_path: ${paths.nyu_bts_dir}/
+dataset: nyu_bts_crop
+batch_size: 8
+eval_batch_size: 1
+num_workers: 4
+val_split: 0.1
+split_seed: ${data_seed}
+pin_memory: True
+preload: False
+persistent_workers: True

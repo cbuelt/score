@@ -1,0 +1,29 @@
+# Optimizer + LR-scheduler bundle. Selecting this one group (optimizer=optimizer)
+# brings both the AdamW optimizer and its matching warmup->cosine scheduler,
+# nested under `optimizer:` and `scheduler:` respectively.
+
+# AdamW optimizer, instantiated as a partial: configure_optimizers binds the
+# param groups (with weight-decay excluded from biases/norms) at runtime.
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 1.0e-3
+  weight_decay: 0.05
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+# Linear-warmup -> cosine-annealing LR schedule, stepped per optimizer step.
+# Instantiated as a partial: configure_optimizers binds the optimizer and sizes
+# the schedule once the trainer is attached. `warmup_epochs` is the number of
+# epochs of linear warmup; it is converted to optimizer steps from the trainer's
+# steps-per-epoch. Warmup epochs are *subtractive* -- they are spent inside
+# `trainer.max_epochs` and the cosine decay covers the remainder, so
+# max_epochs=100 with warmup_epochs=3 is 3 warmup + 97 cosine epochs and the
+# configured max_epochs is the total actually run. SCORE's two-stage fit runs
+# each stage separately, so each stage gets its own warmup+cosine cycle.
+scheduler:
+  _target_: src.utils.lr_scheduler.LinearWarmupCosineAnnealingLR
+  _partial_: true
+  warmup_epochs: 3
+  eta_min: 1.0e-9
+  warmup_start_lr: 0.0

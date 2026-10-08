@@ -1,0 +1,18 @@
+defaults:
+  - default
+
+# Multi-GPU DDP that does NOT defer to SLURM's launcher.
+#
+# On SLURM clusters whose compute nodes have no `srun` binary, Lightning's
+# auto-detected SLURMEnvironment cannot start the peer ranks and DDP init
+# hangs forever (or fails validate_settings when devices != ntasks-per-node).
+# Forcing LightningEnvironment makes the Trainer spawn and manage its own
+# worker processes, exactly like plain torch DDP. `devices` here is the GPU
+# count and is independent of #SBATCH --ntasks-per-node.
+devices: 2
+num_nodes: 1
+
+strategy:
+  _target_: lightning.pytorch.strategies.DDPStrategy
+  cluster_environment:
+    _target_: lightning.fabric.plugins.environments.LightningEnvironment

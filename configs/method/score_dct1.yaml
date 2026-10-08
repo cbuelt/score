@@ -1,0 +1,13 @@
+defaults:
+  - score
+
+# Transform ablation: SCORE with a diagonal core in the DCT-I domain. Same reflective family as the
+# DCT-II but mirrored about the end *sample* rather than the half-sample point
+# (whole-sample even symmetry). Notably the DCT-I does not contain the constant
+# vector -- its endpoints carry half quadrature weight -- so a flat field costs
+# one coefficient under the DCT-II and several here. Non-flat, so the
+# renormalization by the implied marginal variances Delta (paper Eq. (10)) is selected automatically.
+transform:
+  _target_: src.methods.transforms.make_separable_transform
+  kind: dct1
+  shape: [96]

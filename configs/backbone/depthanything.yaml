@@ -1,0 +1,19 @@
+
+_target_: src.models.backbones.DepthAnything
+dinov2_source_path: ${paths.dinov2_dir}
+
+encoder: vits
+features: 64
+decoder_channels: [48, 96, 192, 384]
+use_bn: false
+use_clstoken: false
+checkpoint_path: ${paths.depthanything_checkpoint}
+freeze_encoder: true
+
+head:
+  head_channels: 128
+  bottleneck_channels: 64
+  norm_groups: 8
+  bottleneck_norm_groups: 4
+  shared_num_blocks: 1
+  other_num_blocks: 1

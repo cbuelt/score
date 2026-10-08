@@ -1,0 +1,18 @@
+defaults:
+  - score
+
+# Transform ablation: SCORE with a diagonal core in the DCT-II domain. The DCT
+# is real-orthogonal but NOT flat (entry magnitudes vary), so the
+# renormalization by the implied marginal variances Delta (paper Eq. (10)) is selected
+# automatically (transform.is_flat detection); the softmax still fixes the
+# scale gauge mean(s) = 1.
+#
+# `shape: null` means the axis lengths are read off the first batch, so this
+# config is dataset-agnostic: one DCT per spatial axis, whatever the target
+# field turns out to be -- the two axes of a depth image, or a 1-D forecast
+# horizon of length `pred_len` for the time-series tasks. Set it explicitly (e.g.
+# `shape: [128, 160]`, or `shape: 96` for a single axis) only to assert the grid.
+transform:
+  _target_: src.methods.transforms.make_separable_transform
+  kind: dct
+  shape: null

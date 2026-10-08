@@ -1,0 +1,36 @@
+# @package _global_
+defaults:
+  - /experiments/train: settings
+  - override /datamodule: weather
+  - override /backbone: patchtst
+  # PatchTST's weather script runs the default `lradj='type3'` schedule with
+  # `--patience 20`, so the 100-epoch budget is an upper bound the run is
+  # expected to stop short of, not a target.
+  - override /optimizer@optimizer: patchtst_type3
+  - override /callbacks: early_stop
+
+# Single-stage training.
+staged: False
+
+# Data module: multivariate forecasting.
+datamodule:
+  features: M
+
+# Backbone: PatchTST at the size the weather benchmark is tuned at.
+backbone:
+  n_layers: 2
+  d_model: 128
+  n_heads: 16
+  d_ff: 256
+  dropout: 0.2
+
+# Optimizer: Adam (no weight decay) + the type3 staircase decay, both from the
+# patchtst_type3 bundle; only the peak lr is named here.
+optimizer:
+  optimizer:
+    lr: 1.0e-4
+
+# Early stopping: upstream's weather patience.
+callbacks:
+  early_stopping:
+    patience: 20

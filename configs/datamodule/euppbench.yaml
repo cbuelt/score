@@ -1,0 +1,14 @@
+_target_: src.datamodules.EUPPBenchModule
+# Built offline by `python src/data/build_euppbench.py --lead_time 72h`.
+# Train/val are the 11-member reforecasts (1997-2009 / 2010-2013), test is the
+# 51-member operational forecasts (2017-2018) -- the R2F task of Feik et al.
+# (arXiv:2407.11050).
+data_path: ${paths.euppbench_dir}
+batch_size: 8
+eval_batch_size: 8
+num_workers: 4
+pin_memory: True
+# Memory-map instead of reading into RAM: the splits total ~1.2 GB and only one
+# batch is live at a time.
+preload: False
+persistent_workers: True

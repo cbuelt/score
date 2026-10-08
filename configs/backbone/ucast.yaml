@@ -1,0 +1,12 @@
+_target_: src.models.backbones.DhariwalUNet
+img_resolution: 32
+model_channels: 96
+channel_mult: [1, 2, 3, 4]
+num_blocks: 3
+attn_levels: [2,3]
+channels_per_head: 64
+dropout: 0.10
+
+head:
+  shared_num_blocks: 1
+  other_num_blocks: 3

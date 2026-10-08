@@ -1,0 +1,6 @@
+defaults:
+  - default
+
+# Det: point forecast trained with the MSE.
+_target_: src.methods.deterministic.Deterministic
+loss: mse

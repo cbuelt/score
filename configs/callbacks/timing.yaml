@@ -1,0 +1,5 @@
+timing:
+  _target_: src.utils.timing.TimingCallback
+  warmup_steps: 50 # discard this many steps at the start of each kept epoch
+  skip_first_epoch: True # exclude epoch 0 entirely (warmup, autotune, IO spin-up)
+  flush_interval: 50 # buffer this many CUDA-event pairs before synchronizing

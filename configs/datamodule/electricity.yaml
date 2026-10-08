@@ -1,0 +1,20 @@
+# Electricity (hourly). 321 variates; 70/10/20 ratio ("custom") split.
+# Smaller batch size because of the very wide multivariate input.
+_target_: src.datamodules.TimeSeriesDataModule
+data_path: ${paths.time_series_dir}/electricity/electricity.csv
+data_split: custom
+features: M
+target: OT
+seq_len: 336
+pred_len: 96
+label_len: 0
+scale: True
+timeenc: 0
+freq: h
+return_marks: False
+batch_size: 32
+eval_batch_size: 32
+num_workers: 4
+drop_last: True
+preload: True
+persistent_workers: True

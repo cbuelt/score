@@ -1,0 +1,29 @@
+# Optimizer + LR-scheduler bundle reproducing PatchTST's `lradj='TST'` recipe,
+# used by its ETTm, traffic and electricity scripts. Like patchtst_type3.yaml it
+# drops the weight decay (upstream is plain Adam); the schedule is a stock
+# OneCycleLR over the whole epoch budget, stepped per batch.
+#
+# `warmup_epochs` is upstream's `pct_start` expressed in epochs:
+# pct_start = warmup_epochs / max_epochs. The traffic and electricity scripts use
+# pct_start=0.2, so 20 epochs of a 100-epoch budget -- override it whenever the
+# budget is not 100 (e.g. SCORE's stage-1 fit, which runs 75).
+#
+# Unlike type3 this schedule does anneal to a terminal LR, and only at the final
+# step, so an early stop truncates the anneal. Upstream accepts that (it pairs
+# TST with patience 10); if you would rather not, shorten max_epochs instead of
+# adding a patience.
+
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 1.0e-4
+  weight_decay: 0.0
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+scheduler:
+  _target_: src.utils.lr_scheduler.OneCycleLR
+  _partial_: true
+  warmup_epochs: 20
+  div_factor: 25.0
+  final_div_factor: 1.0e4

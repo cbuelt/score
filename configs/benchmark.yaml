@@ -1,0 +1,72 @@
+# Runtime benchmark: per-step training cost of each predictive method.
+#
+# Composes exactly like configs/train.yaml -- same groups, same experiment tree --
+# so an arm is specified the way a training run is:
+#
+#   python src/train/benchmark.py experiments=train/euppbench method=lord \
+#       method.loss=kernel_score benchmark.batch_size=8
+#
+# The trainer/callbacks/logger groups are present only so the shared experiment
+# configs compose; the benchmark drives its own loop and never builds a Trainer.
+defaults:
+  - _self_
+  - datamodule: etth1
+  - backbone: patchtst
+  - method: diag
+  - optimizer@optimizer: optimizer
+  - callbacks: default
+  - callbacks@callbacks_stage1: stage1
+  - callbacks@callbacks_stage2: stage2
+  - logger: wandb
+  - trainer: default
+  - paths: default
+  # Machine-specific overrides (git-ignored), see configs/local/default.yaml.example.
+  - optional local: default
+  - hydra: benchmark
+  - experiments: ???
+
+# `task_name` is deliberately not set here: the experiment group is composed last
+# (so it can override every group above it) and experiments/train/settings.yaml
+# sets `task_name: train`, which would win over anything written in this file.
+# The output directory comes from the `hydra: benchmark` group above instead, so
+# a cost run never lands in the training log tree.
+
+benchmark:
+  # Seeds vary the weight initialization and the batch order. Five, like the
+  # training runs, which makes the reported spread a sample standard deviation
+  # worth quoting rather than a two- or three-point range.
+  seeds: [1, 2, 3, 4, 42]
+
+  # THE batch size, applied to every arm. A per-step time is only comparable
+  # across methods at one batch size, and the value has to be one the *heaviest*
+  # arm fits -- on the gridded and wide-multivariate sets that is the sample-based
+  # baseline (SB), whose activations scale with n_train_samples (M = 5, see
+  # method/sample_based.yaml). `null` keeps the dataset default, which is only safe
+  # when no arm is memory-bound.
+  batch_size: null
+
+  # Discarded before the sample is taken: allocator growth, cudnn autotune and
+  # the first-call cost of any lazily built kernel all land in these.
+  warmup_steps: 20
+  # Kept steps per seed. 100 x 5 seeds gives 500 samples per arm, which pins the
+  # median well inside a percent on every dataset here.
+  measure_steps: 100
+
+  # Peak reserved memory above this is flagged as `over_budget` in the row (the
+  # numbers are still kept). The batch size is pinned from the *heaviest* arm, so
+  # this is the check that the pin is still valid after a config change.
+  memory_budget_gb: 48
+
+  device: cuda
+  # Fixed-shape inputs throughout, so autotuning pays off and is what a real run
+  # does. Keep it on for every arm or the comparison is between two setups.
+  cudnn_benchmark: true
+
+  # Shared append-only results file; the run directory gets its own copy.
+  out: ${paths.log_dir}/benchmark/runtime.jsonl
+
+  # Skip an arm that `out` already holds for every seed above, at the same
+  # batch size, loss and member count. Off by default; runs/benchmark.sh turns it
+  # on, so a resubmitted sweep resumes instead of appending a second set of rows
+  # for the same seeds, which notebooks/make_runtime_table.py would pool into one mean.
+  skip_measured: false

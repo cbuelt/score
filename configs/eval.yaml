@@ -1,0 +1,63 @@
+defaults:
+  # `_self_` first, matching configs/train.yaml: the selected groups override this
+  # file's body. With `_self_` last, the inline `method:` block below would
+  # silently override the chosen method group (e.g. its `loss`).
+  - _self_
+  - datamodule: depth
+  - backbone: depthanything
+  - method: diag
+  - logger: wandb
+  - paths: default
+  # Machine-specific overrides (git-ignored), see configs/local/default.yaml.example.
+  - optional local: default
+  - hydra: default
+
+# Run settings
+seed: 42
+
+# Data seed: train/val split only (see configs/train.yaml). Must match the value
+# used at train time so evaluation sees the same partition.
+data_seed: 42
+
+# Per-coordinate kernel bandwidth scaling factors, as a list. Each factor's actual
+# bandwidth is resolved at runtime as gamma = sqrt(gamma_eval * d), where d is the
+# total target dimension (a property of the dataset), keeping scores roughly
+# dataset-independent under pixel-wise standardization. A single entry, e.g. [1.0],
+# is the plain kernel score; multiple entries, e.g. [0.5, 1.0, 2.0], give a
+# multi-bandwidth score (the per-bandwidth scores are averaged).
+gamma_eval: [1.0]
+
+# Task name
+task_name: eval
+
+# Path to the trained checkpoint to evaluate (required).
+ckpt_path: ???
+
+# Device the forward pass and metrics run on.
+device: cuda
+
+# Metrics to compute; null -> every registered metric.
+metrics: null
+
+# Settings for the `variogram_score` metric (see src/evaluation/variogram.py).
+variogram:
+  # Pair weight w_ij: `none` (unweighted) or `inv_dist` (1 / euclidean grid
+  # distance), which emphasizes short-range pairs. `inv_dist` is a spatial
+  # weight and requires a single-channel target, so it suits the 2D tasks
+  # (era5, depth); set it alongside the matching `datamodule`.
+  weight: none
+  # Rows of the pair matrix per block. Bounds the working set to
+  # (B, block_size, V), so peak memory scales with the *product* of the eval
+  # batch size and this -- raise it only alongside a smaller eval_batch_size.
+  # Throughput is flat well below 256 (the kernel is compute-bound), so larger
+  # values cost memory and buy no speed. On ERA5 at eval_batch_size=8 this is
+  # ~2.5 GiB and ~0.37 s/sample; 1024 would be ~9.8 GiB for the same speed.
+  block_size: 256
+
+# Method loss is unused at eval time but required by every method __init__. This
+# is only a fallback; the selected method group overrides it (see the `_self_`
+# note above).
+method:
+  loss: mse
+
+

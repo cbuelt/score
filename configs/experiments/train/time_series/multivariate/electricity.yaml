@@ -1,0 +1,36 @@
+# @package _global_
+defaults:
+  - /experiments/train: settings
+  - override /datamodule: electricity
+  - override /backbone: patchtst
+  # PatchTST's electricity script runs `lradj='TST'` (OneCycleLR, pct_start=0.2)
+  # with `--patience 10`.
+  - override /optimizer@optimizer: patchtst_onecycle
+  - override /callbacks: early_stop
+
+# Single-stage training.
+staged: False
+
+# Data module: multivariate forecasting.
+datamodule:
+  features: M
+
+# Backbone: PatchTST at the size the electricity benchmark is tuned at.
+backbone:
+  n_layers: 2
+  d_model: 128
+  n_heads: 16
+  d_ff: 256
+  dropout: 0.2
+
+# Optimizer: Adam (no weight decay) + OneCycleLR, both from the
+# patchtst_onecycle bundle; only the peak lr is named here. Its warmup_epochs=20
+# is pct_start=0.2 of the 100-epoch budget.
+optimizer:
+  optimizer:
+    lr: 1.0e-4
+
+# Early stopping: upstream's electricity patience.
+callbacks:
+  early_stopping:
+    patience: 10

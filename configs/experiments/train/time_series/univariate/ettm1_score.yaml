@@ -1,0 +1,37 @@
+# @package _global_
+defaults:
+  - /experiments/train: settings
+  - /optimizer@optimizer_stage1: optimizer
+  - /optimizer@optimizer_stage2: optimizer_ft
+  - override /datamodule: ettm1
+  - override /backbone: patchtst
+  - override /method: score
+
+# SCORE two-stage fit: train() dispatches to train_staged, which fits the mean
+# and marginal variances first (stage 1), then freezes them and fits the
+# correlation core (stage 2).
+staged: True
+
+# Data module: univariate forecasting of the OT target.
+datamodule:
+  features: S
+
+# Backbone: same ETT sizing as the single-stage experiment; `shared` carries
+# mu+sigma, `other` the correlation core.
+backbone:
+  n_layers: 2
+  d_model: 128
+  n_heads: 16
+  d_ff: 256
+  dropout: 0.2
+  head:
+    shared_num_blocks: 1
+    other_num_blocks: 1
+
+# Optimizers.
+optimizer_stage1:
+  optimizer:
+    lr: 1.0e-4
+optimizer_stage2:
+  optimizer:
+    lr: 1.0e-4

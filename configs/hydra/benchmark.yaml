@@ -1,0 +1,19 @@
+# Output layout for the runtime benchmark.
+#
+# Identical to `hydra/default` except that the directory is pinned to
+# `benchmark/` instead of being derived from ${task_name}. The benchmark composes
+# the *training* experiment configs verbatim (that is what makes its numbers
+# describe the models actually trained), and those set `task_name: train` from
+# experiments/train/settings.yaml -- so a ${task_name}-derived path would file
+# every cost run under the training tree.
+run:
+  dir: ${paths.log_dir}/benchmark/runs/${now:%Y-%m-%d}_${now:%H-%M-%S}
+sweep:
+  dir: ${paths.log_dir}/benchmark/multiruns/${now:%Y-%m-%d}_${now:%H-%M-%S}
+  subdir: ${hydra.job.num}
+
+job_logging:
+  handlers:
+    file:
+      # Incorporates fix from https://github.com/facebookresearch/hydra/pull/2242
+      filename: ${hydra.runtime.output_dir}/benchmark.log

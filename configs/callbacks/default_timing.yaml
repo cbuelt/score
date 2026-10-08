@@ -1,0 +1,8 @@
+# Opt-in timing variant: the standard callbacks plus the TimingCallback.
+# Enable with `callbacks=default_timing` for dedicated timing runs (use
+# `trainer.devices=1` for clean single-GPU numbers). Kept separate from
+# `default` so CUDA-event syncs add no overhead to normal training.
+defaults:
+  - default
+  - timing
+  - _self_

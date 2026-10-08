@@ -1,0 +1,3 @@
+# This file marks the repository root.
+# It is used by src/utils/rootpath.py to locate the project root so that
+# `python src/train/train.py` works without setting PYTHONPATH / PROJECT_ROOT.

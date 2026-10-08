@@ -1,0 +1,23 @@
+defaults:
+  - default
+
+# Multi-GPU DDP for the SCORE two-stage fit. Same setup as ddp.yaml
+# (LightningEnvironment so the Trainer spawns its own workers from a single
+# SLURM task), with one addition:
+# `find_unused_parameters: true`.
+#
+# In stage 2 the shared trunk and the mu/sigma heads are frozen
+# (requires_grad=False) but forward() still computes their outputs. The stage-2
+# core score may not backprop through those heads, leaving parameters that
+# ran in the forward graph without a gradient. Plain DDP errors on this
+# ("Expected to have finished reduction ... find_unused_parameters=True"); this
+# flag makes DDP tolerate it. Kept separate from ddp.yaml so single-stage runs
+# avoid the extra reduction-tracking overhead.
+devices: 2
+num_nodes: 1
+
+strategy:
+  _target_: lightning.pytorch.strategies.DDPStrategy
+  find_unused_parameters: true
+  cluster_environment:
+    _target_: lightning.fabric.plugins.environments.LightningEnvironment

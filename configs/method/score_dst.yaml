@@ -1,0 +1,17 @@
+defaults:
+  - score
+
+# Transform ablation: SCORE with a diagonal core in the DST-II domain (odd
+# boundary conditions, in contrast to the DCT's reflective and the DFT's
+# periodic ones). Non-flat, so the renormalization by the implied marginal variances Delta (paper Eq. (10))
+# is selected automatically.
+#
+# `shape: null` means the axis lengths are read off the first batch, so this
+# config is dataset-agnostic: one DST per spatial axis, whatever the target
+# field turns out to be -- the two axes of a depth image, or a 1-D forecast
+# horizon of length `pred_len` for the time-series tasks. Set it explicitly (e.g.
+# `shape: [128, 160]`, or `shape: 96` for a single axis) only to assert the grid.
+transform:
+  _target_: src.methods.transforms.make_separable_transform
+  kind: dst
+  shape: null

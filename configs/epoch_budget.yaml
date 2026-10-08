@@ -1,0 +1,77 @@
+# Epoch-budget ablation: is SCORE's gain due to the correlation *core*, or just
+# to the extra epochs its two-stage fit spends?
+#
+# At one total epoch budget E, two arms are trained and scored on the test set:
+#
+#   marginal  a diagonal Gaussian (Diag) on the marginal CRPS for the full E epochs
+#   ours      SCORE: the same backbone, two-stage fit, 3E/4 on stage 1 (marginals)
+#             + E/4 on stage 2 (core)
+#
+# Composes exactly like configs/train.yaml -- same groups, same experiment tree --
+# so an arm is specified the way a training run is, and both arms are the models
+# of the main experiments:
+#
+#   python src/evaluation/epoch_budget.py experiments=train/euppbench \
+#       method=diag method.loss=crps \
+#       epoch_budget.arm=marginal epoch_budget.frac=0.6 seed=1
+#
+# The budget is derived from the experiment's own `trainer.max_epochs`, so the
+# ladder cannot drift from the configuration it is anchored to.
+defaults:
+  - _self_
+  - datamodule: etth1
+  - backbone: patchtst
+  - method: deterministic
+  - optimizer@optimizer: optimizer
+  - callbacks: default
+  - callbacks@callbacks_stage1: stage1
+  - callbacks@callbacks_stage2: stage2
+  # No W&B by default. This study trains a few hundred throwaway models whose
+  # tags are indistinguishable from those of the main runs, and the score tables
+  # select W&B runs by those tags (notebooks/make_results_tables.py), so logging
+  # them would add spurious seeds at the wrong budgets to every table. The scores
+  # come back from `train()` directly, so nothing is lost. To log anyway:
+  # `logger=wandb '+logger.wandb.tags=[epoch_budget,exclude-from-results]'`
+  # -- `exclude-from-results` is in that script's EXCLUDE_TAGS.
+  - logger: null
+  - trainer: default
+  - paths: default
+  # Machine-specific overrides (git-ignored), see configs/local/default.yaml.example.
+  - optional local: default
+  - hydra: epoch_budget
+  - experiments: ???
+
+# `task_name` is deliberately not set here: the experiment group is composed last
+# (so it can override every group above it) and experiments/train/settings.yaml
+# sets `task_name: train`, which would win over anything written in this file.
+# The output directory comes from the `hydra: epoch_budget` group above instead.
+
+epoch_budget:
+  # Which side of the comparison this run is.
+  #
+  #   marginal  the single-stage control: the whole budget on the marginals.
+  #             Requires a single-stage experiment (`staged: false`); pair it with
+  #             `method=diag method.loss=crps`, which is the same objective
+  #             SCORE's stage 1 optimizes.
+  #   ours      SCORE with its two-stage fit. Requires `staged: true`.
+  #
+  # The arm is checked against the experiment rather than inferred from it: the
+  # one mistake that produces a plausible-looking wrong number is running the
+  # wrong arm's epoch keys, since `trainer.max_epochs` is silently inert for a
+  # staged run (its ceilings come from stage{1,2}_max_epochs) and the stage keys
+  # are equally inert for a single-stage one.
+  arm: ???
+
+  # The rung, as a fraction of the experiment's `trainer.max_epochs`. Given as a
+  # fraction rather than an epoch count so the 1.0 rung is the main-experiment
+  # configuration *by construction* -- which makes it a reproducibility check on
+  # the whole pipeline.
+  frac: ???
+
+  # Shared append-only results file; the run directory gets its own copy.
+  out: ${paths.log_dir}/epoch_budget/scores.jsonl
+
+  # Re-run a cell whose row is already in `out`. Off by default, so that a bare
+  # re-run of an interrupted sweep is a safe resume. Resume by re-running, never
+  # with this.
+  overwrite: false

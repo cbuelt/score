@@ -1,0 +1,73 @@
+defaults:
+  - score
+
+# SCORE on EUPPBench: Whittle-Matern core in the *graph* Fourier domain, i.e. the
+# eigenbasis of the normalized graph Laplacian built from the station distances. This is the irregular-
+# geometry counterpart of the native FFT path -- on a station network there is no
+# regular grid, so a circulant core would impose periodic stationarity along an
+# arbitrary index order (for EUPPBench, a sort by country) and is meaningless.
+#
+# The graph here is deliberately NOT the multigraph backbone's message-passing
+# graph. That one is a 100 km cutoff, which is right for attention (sparsity is
+# the point) but wrong for a Laplacian: the cutoff isolates 3 of the 115 stations,
+# so the graph is disconnected and the zero eigenvalue is degenerate -- `eigh`
+# then resolves that eigenspace as an arbitrary rotation and the basis is not
+# reproducible. A dense Gaussian kernel has a simple zero eigenvalue. Nothing is
+# lost by densifying: the transform matrix is dense either way and the
+# eigendecomposition happens once, at construction.
+#
+# The basis is localized, so `is_flat` is False and the renormalization by the implied marginal variances Delta (paper Eq. (10)) is
+# selected automatically -- the predictive marginal variances stay exactly the
+# stage-1 tau.
+transform:
+  _target_: src.methods.transforms.make_graph_transform
+  # Same file the multigraph backbone reads for its edges and the variogram score
+  # for its inverse-distance weights, so station geometry has one source.
+  meta_path: ${datamodule.data_path}/meta.npz
+  # null -> median distance to the `knn`-th nearest neighbour, which adapts to the
+  # station density (much higher in Belgium than in Austria). Worth sweeping at
+  # 0.5x / 2x the default; it is the only hyperparameter the basis has.
+  length_scale: null
+  knn: 10
+  # "sym" -> I - D^-1/2 W D^-1/2. Degree-normalized, so the modes are not pulled
+  # toward densely sampled regions. "comb" (D - W) keeps the constant vector as
+  # the zero mode; "rw_sym" adds the diffusion-maps density normalization.
+  normalization: sym
+
+# The network emits three scalars per forecast case and the spectrum is
+# *evaluated* at the Laplacian eigenvalues,
+#
+#     g(lambda) = sigma (kappa^2 + lambda)^-alpha,     s_k = g(lambda_k)^2,
+#
+# rather than learned one logit per mode. This is the graph analogue of the
+# Matern/SPDE spectral density: (kappa^2 - Delta)^alpha u = W (Delta the
+# Laplacian here) has exactly this diagonal core in the Laplacian eigenbasis, so
+# on a regular grid (lambda_k = |omega_k|^2) it reduces to the ordinary Matern
+# spectrum. It is the paper's Matern filter g(lambda) = (2 nu / kappa^2 +
+# lambda)^(-nu), written in a different parameterization.
+#
+# Why three scalars instead of one logit per mode:
+#   * s_k is *monotone* in lambda_k by construction. A free spectrum has nothing
+#     coupling neighbouring modes, and Laplacian eigenvectors are oscillatory
+#     (mode k has ~k sign changes), so mass on an isolated mode is a *ringing*
+#     (sign-alternating with distance) correlation. Here that is
+#     unrepresentable rather than penalized.
+#   * the dynamic range is bounded in closed form,
+#     ((kappa^2 + lambda_max)/(kappa^2 + lambda_min))^(2 alpha), so the core
+#     stays well conditioned, which a free spectrum does not guarantee.
+#   * degenerate eigenvalues get equal weight automatically, so the fit does
+#     not depend on the arbitrary rotation `eigh` returns inside a repeated
+#     eigenspace;
+#   * stage 2 drops to ~800 effective parameters on a frozen trunk.
+#
+# sigma is annihilated by the mean(s) = 1 gauge (s and c*s give the same
+# correlation core), so the identifiable content is (kappa, alpha): range and
+# smoothness. The third output is kept for faithfulness to the parameterization
+# and simply receives no gradient.
+core_parameterization: matern
+
+# Backstop cap on the peak-to-peak spread of the Matern log-spectrum, bounding
+# the core's dynamic range by exp(9.2) ~ 1e4 and hence its condition number. The
+# Matern range is already bounded analytically, so this should never bind; if it
+# does, alpha has run away.
+core_logit_range: 9.2

@@ -1,0 +1,13 @@
+defaults:
+  - score
+
+# Transform ablation, NULL CONTROL: SCORE in a fixed random orthogonal basis. Unitary, but carrying no
+# notion of frequency, locality or boundary. If a diagonal core here matched
+# the DCT, the gain from transforming would come from diagonalizing in *some*
+# rotated frame rather than from the structure of the chosen one, and the case
+# for picking a basis would collapse. The basis is seeded by axis length, so it
+# is a property of the method and not of the run.
+transform:
+  _target_: src.methods.transforms.make_separable_transform
+  kind: random
+  shape: [96]

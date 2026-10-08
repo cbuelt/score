@@ -1,0 +1,13 @@
+defaults:
+  - default
+
+# LorD: low-rank-plus-diagonal Gaussian in physical space, Sigma = D + U Uᵀ.
+_target_: src.methods.lord.LorD
+loss: kernel_score
+# Rank r of the low-rank factor U; the only single-stage method that consumes it.
+rank: 1
+# Evaluate the NLL in float64 (default off: float32 elsewhere). Needed at the
+# depth resolution, d ~ 2.4e5, where the float32 capacitance matrix loses
+# positive definiteness; enable with `method.nll_float64=true` for the gridded
+# tasks (ERA5, depth).
+nll_float64: false

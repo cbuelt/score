@@ -1,0 +1,94 @@
+# @package _global_
+# EUPPBench station post-processing with the multigraph GAT model of
+# Feik, Lerch & Stuehmer (2024), arXiv:2407.11050.
+#
+# Reproduces their "reforecast to forecast" (R2F) task at 72 h lead: fit on the
+# 11-member reforecasts, evaluate on the 51-member 2017-2018 forecasts. Their
+# model is exactly a per-station diagonal Gaussian trained on the
+# marginal CRPS, i.e. Diag (`method=diag`) with `loss: crps` (see
+# experiments/train/euppbench) -- swapping in LorD or SCORE turns the same
+# backbone into a joint multivariate predictive over the station network. This
+# file is the SCORE experiment: graph Fourier transform with a Matern filter.
+defaults:
+  - /experiments/train: settings
+  - override /datamodule: euppbench
+  - override /backbone: multigraph
+  - override /method: score_matern
+
+# Two-stage fit: stage 1 fits the per-station marginals, stage 2 the correlation
+# core in the graph Fourier domain. Note `method: score_matern`, not `score` --
+# the latter defaults to `transform: null`, i.e. the native FFT path, which here
+# would mean a circulant over a station axis sorted AT/BE/FR/DE/NL. That does not
+# silently mis-score (the masked dense path refuses the Fourier path outright, see
+# ScoreMethod._dense_core in src/methods/score.py), but it would fail only once
+# stage 2 starts.
+staged: True
+
+# Stage 2 scores the predictive covariance Sigma_P, not the bare correlation
+# core -- the one place this experiment deviates from the SCORE default.
+#
+# The default `kernel_score` scores C = B* diag(s) B against the standardized
+# target D̃⁻¹(y - mu). On a *flat* basis (the native FFT path) that is sound: the
+# implied marginal variances Delta(s) = mean(s) = 1 by the scale gauge, so D̃ = D
+# is fixed by stage 1, the standardized target is a fixed transform of the data,
+# and the core score is a proper score whose minimizer consistently estimates C.
+#
+# The graph Fourier basis is localized, so `is_flat` is False, the
+# renormalization by Delta (paper Eq. (10)) is active, and D̃² = tau / Delta(s)
+# *depends on the stage-2 parameter s*. The scored observation then moves with
+# the parameter, so the objective is not a proper scoring rule and its minimizer
+# carries no guarantee for Sigma_P = D̃ C D̃. `dense_kernel_score` scores Sigma_P
+# against y - mu instead: the same analytic formula, on the right object. At
+# d = 115 stations it is the same (d, d) Cholesky the masked dense path (needed
+# anyway, since EUPPBench always has missing stations) already pays for.
+#
+# `sample_kernel_score` -- the fair ensemble estimator of the same functional on
+# M = n_train_samples reparameterized draws -- is a cross-check and the route
+# that scales past station-network dimensions. Select it with
+# `method.stage2_loss=sample_kernel_score`.
+#
+# The run name derives from stage2_loss (train._run_loss_name), so each choice
+# gets its own results slug.
+method:
+  stage2_loss: dense_kernel_score
+
+# Optimizer. Note the nested path: train.py reads cfg.optimizer.optimizer.lr (the
+# `optimizer` group is a bundle of an optimizer and its scheduler), so a bare
+# `optimizer.lr` here would be silently ignored.
+#
+# Feik et al. use plain AdamW at a fixed 31 epochs with early stopping; we keep
+# the repo-standard linear-warmup + cosine schedule and set the budget here, so
+# this run is comparable with every other experiment.
+optimizer:
+  optimizer:
+    lr: 2.0e-4
+
+# The setting used for the reported results. It is *not* required by the Matern
+# filter: its head emits three scalars that `_matern_spectrum` pools over
+# stations, and pooling a shared per-station map is itself a linear map of the
+# pooled features -- so "per_station" spans the same functions with 1/N of the
+# readout parameters. It matters for a spectrum with one free value per graph
+# mode, where a shared per-station readout has no per-mode parameter and pins the
+# core near the identity; see Multigraph.spectrum_readout.
+backbone:
+  spectrum_readout: global
+
+trainer:
+  max_epochs: 40
+stage1_max_epochs: 30
+stage2_max_epochs: 10
+
+# Single-channel field over an irregular station network, so the variogram score
+# is weighted by true inverse geodesic distance. The grid-index fallback would be
+# meaningless here: the event axis is ordered by country, not by geography, so
+# `dist_path` points the weighting at the real station separations. These keys
+# are forwarded verbatim to `variogram_score` by metric_kwargs_from_cfg.
+variogram:
+  weight: inv_dist
+  dist_path: ${datamodule.data_path}/meta.npz
+
+# Every metric here is masked exactly on the observed stations. The closed-form
+# (sliced) `energy_score` is the one loss with no masked form, but the eval
+# metric of that name is the ensemble estimator, which masks fine -- see
+# PredictiveMethod.MASK_UNSUPPORTED_LOSSES.
+metrics: [mse, mae, nll, crps, energy_score, kernel_score, variogram_score]

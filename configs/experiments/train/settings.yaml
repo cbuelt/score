@@ -1,0 +1,53 @@
+# @package _global_
+# Settings shared by all training experiments.
+seed: 42
+data_seed: 42
+
+gamma_train: [0.25,0.5,1.0,2.0,5.0]
+gamma_eval: [1.0]
+
+trainer:
+  max_epochs: 100
+# Warmup epochs are SUBTRACTIVE: the scheduler's warmup_epochs are spent inside
+# the budget below (e.g. 100 = 3 warmup + 97 cosine), so these numbers are the
+# epochs actually run and can be set directly. Fair budget across one- and
+# two-stage methods: the stage budgets sum to trainer.max_epochs at a 3:1 split.
+stage1_max_epochs: 75
+stage2_max_epochs: 25
+
+# SCORE two-stage fit only: adopt a previous run's stage-1 marginals instead of
+# re-fitting them, e.g.
+#   stage1_ckpt=logs/train/runs/<run_dir>/checkpoints/stage1/epoch_023.ckpt
+#
+# Exact, not an approximation: stage 1 optimizes a marginal score and, with the
+# renormalization by the implied marginal variances Delta, the predictive
+# marginals do not depend on the core at all --
+# so two runs differing only in the core have identical stage-1 problems. Use it
+# for core ablations (filter order, temperature, activation), which would
+# otherwise spend ~75% of their runtime recomputing the same marginals. Do NOT
+# use it when anything upstream of the core changes (backbone, data, split,
+# stage-1 loss, optimizer), since the donor would no longer be the fit this
+# config asks for.
+stage1_ckpt: null
+
+# Task name
+task_name: train
+# set False to skip model training
+train: True
+eval: True
+metrics: null
+
+# Settings for the `variogram_score` metric (see src/evaluation/variogram.py).
+variogram:
+  # Pair weight w_ij: `none` (unweighted) or `inv_dist` (1 / euclidean grid
+  # distance), which emphasizes short-range pairs. `inv_dist` is a spatial
+  # weight and requires a single-channel target, so it is the default only for
+  # the 2D tasks, which override this.
+  weight: none
+  # Rows of the pair matrix per block. Bounds the working set to
+  # (B, block_size, V), so peak memory scales with the *product* of the eval
+  # batch size and this -- raise it only alongside a smaller eval_batch_size.
+  # Throughput is flat well below 256 (the kernel is compute-bound), so larger
+  # values cost memory and buy no speed. On ERA5 at eval_batch_size=8 this is
+  # ~2.5 GiB and ~0.37 s/sample; 1024 would be ~9.8 GiB for the same speed.
+  block_size: 256

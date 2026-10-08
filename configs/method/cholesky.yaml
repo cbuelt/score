@@ -1,0 +1,13 @@
+defaults:
+  - default
+
+_target_: src.methods.cholesky.Cholesky
+# Chol: unconstrained dense Sigma = L Lᵀ. `nll` rather than `kernel_score` by
+# default: with no structure to regularize it, the likelihood is the natural
+# objective for this full-covariance reference.
+loss: nll
+# `out_channels`, `gamma`, `gamma_eval` and `event_dim` are injected at runtime.
+# `event_dim` (= datamodule.get_total_dimension()) sizes the head, so this method
+# only composes with datasets small enough for a dense factor -- EUPPBench
+# (V = 115 stations) and the univariate ETT horizons (V = 96). It refuses
+# anything above Cholesky.max_event_dim = 1024 at construction.

@@ -1,0 +1,11 @@
+defaults:
+  - score
+
+# Transform ablation: SCORE with a diagonal core in the DCT-IV domain: half-sample even at the left
+# boundary and half-sample odd at the right, the mixed convention underlying
+# lapped transforms. Completes the reflective family (DCT-I/II/IV) so the
+# boundary-condition explanation can be tested rather than illustrated.
+transform:
+  _target_: src.methods.transforms.make_separable_transform
+  kind: dct4
+  shape: [96]

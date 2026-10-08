@@ -1,0 +1,31 @@
+# @package _global_
+# ERA5, single-stage baselines on the U-Cast (Dhariwal) UNet. The default method
+# is Det (`deterministic`); select the others with method=<name>.
+defaults:
+  - /experiments/train: settings
+  - override /datamodule: era5
+  - override /backbone: ucast
+  - override /method: deterministic
+
+# Single-stage training.
+staged: False
+
+datamodule:
+  downscaling_factor: 1
+
+# Optimizer. Note the nested path: train.py reads cfg.optimizer.optimizer.lr (the
+# `optimizer` group is a bundle of an optimizer and its scheduler), so a bare
+# `optimizer.lr` here would be silently ignored.
+optimizer:
+  optimizer:
+    lr: 3.0e-4
+    weight_decay: 0.1
+    betas: [0.9, 0.95]
+
+trainer:
+  max_epochs: 30
+
+# Single-channel 2D field: weight the variogram score by inverse grid distance,
+# emphasizing the short-range pairs where the covariance parameterizations differ.
+variogram:
+  weight: inv_dist

@@ -1,0 +1,13 @@
+eps: 1e-9
+# Training ensemble size for the sampling-based scores. The sample-based baseline
+# (SB) overrides it (method/sample_based.yaml, M = 5); the closed-form families ignore
+# it entirely, since their train losses are analytic.
+n_train_samples: 10
+# Evaluation ensemble size. The ensemble estimators of the energy and kernel
+# scores carry an O(1/M) bias, so a large M tightens the reported scores, and
+# evaluation is a single pass with no stored activations.
+#
+# Cost is the sample buffer `get_samples(..., flatten=True)` -> (B, V, M), i.e.
+# B * V * M * 4 bytes. At M = 100 that is 2.0 GiB for depth at eval_batch_size 16
+# (V = 307 200), 0.8 GiB for traffic and under 0.4 GiB everywhere else.
+n_eval_samples: 100

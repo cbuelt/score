@@ -1,0 +1,24 @@
+defaults:
+  - model_checkpoint
+ # - early_stopping
+  - _self_
+
+# Stage-1 callbacks of the SCORE two-stage fit (mean mu and marginal variances
+# tau). Separate checkpoint dir so the stage-1 best is kept distinct from stage 2; both stages monitor training/val_loss but it is a
+# different quantity per stage, hence fresh callback instances (a fresh trainer
+# per stage).
+model_checkpoint:
+  dirpath: ${paths.output_dir}/checkpoints/stage1
+  filename: "epoch_{epoch:03d}"
+  monitor: training/val_loss
+  mode: min
+  auto_insert_metric_name: False
+
+# early_stopping:
+#   monitor: training/val_loss
+#   patience: 10
+#   mode: min
+
+monitor:
+  _target_: lightning.pytorch.callbacks.LearningRateMonitor
+  logging_interval: step

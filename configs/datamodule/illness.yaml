@@ -1,0 +1,20 @@
+# National illness (weekly, 966 rows). 7 variates; 70/10/20 ratio ("custom") split.
+# Short series -> smaller look-back/horizon (PatchTST's illness setting).
+_target_: src.datamodules.TimeSeriesDataModule
+data_path: ${paths.time_series_dir}/illness/national_illness.csv
+data_split: custom
+features: M
+target: OT
+seq_len: 104
+pred_len: 24
+label_len: 0
+scale: True
+timeenc: 0
+freq: w
+return_marks: False
+batch_size: 32
+eval_batch_size: 32
+num_workers: 4
+drop_last: True
+preload: True
+persistent_workers: True

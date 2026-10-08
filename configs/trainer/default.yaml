@@ -1,0 +1,25 @@
+_target_: lightning.pytorch.trainer.Trainer
+
+default_root_dir: ${paths.output_dir}
+
+min_epochs: 1
+max_epochs: 100
+
+# Micro-batches accumulated per optimizer step. The effective batch is
+# `datamodule.batch_size * accumulate_grad_batches`, and with only GroupNorm in
+# the backbones the accumulated gradient is identical to the one of a single
+# large batch (Lightning divides the loss by this factor). Use it to reach the
+# configured batch size on cards that cannot hold it, instead of silently
+# training at a smaller effective batch. The LR schedule follows automatically,
+# since it is sized from `trainer.estimated_stepping_batches`.
+accumulate_grad_batches: 1
+
+accelerator: gpu
+devices: auto
+
+# perform a validation loop every N training epochs
+check_val_every_n_epoch: 1
+
+# Progress bar
+enable_progress_bar: False
+

@@ -1,0 +1,27 @@
+defaults:
+  - model_checkpoint
+  - early_stopping
+  - _self_
+
+# Stage-1 callbacks of the SCORE two-stage fit, with early stopping:
+# callbacks/stage1 plus the patience the PatchTST scripts use. Stage 1 fits the
+# mean mu and the marginal variances tau with the backbone unfrozen and carries
+# the bulk of the epoch budget, so it is the stage where a patience pays off.
+#
+# There is deliberately no stage-2 counterpart: stage 2 is short and runs a
+# warmup->cosine fine-tune, which an early stop would truncate before it anneals.
+model_checkpoint:
+  dirpath: ${paths.output_dir}/checkpoints/stage1
+  filename: "epoch_{epoch:03d}"
+  monitor: training/val_loss
+  mode: min
+  auto_insert_metric_name: False
+
+early_stopping:
+  monitor: training/val_loss
+  mode: min
+  patience: 20
+
+monitor:
+  _target_: lightning.pytorch.callbacks.LearningRateMonitor
+  logging_interval: step

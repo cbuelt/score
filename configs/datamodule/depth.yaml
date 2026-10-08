@@ -1,0 +1,15 @@
+_target_: src.datamodules.DepthDataModule
+data_path: ${paths.nyu_dir}/
+dataset: nyu
+batch_size: 128
+# The (B, V, M) evaluation sample buffer is B * 307200 * M * 4 bytes, so 16
+# images x 100 samples need ~2.0 GiB.
+eval_batch_size: 16
+num_workers: 2
+val_split: 0.1
+# Train/val partition seed. Bound to `data_seed`, not `seed`, so a multi-seed
+# sweep keeps the same split and only varies the training run.
+split_seed: ${data_seed}
+pin_memory: True
+preload: True
+persistent_workers: True
